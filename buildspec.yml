@@ -5,26 +5,18 @@ phases:
     runtime-versions:
       nodejs: 18
   
-  build:
-    commands:
-      - echo Build started on `date`
-      # Your build commands here
-  
   post_build:
     commands:
-      - echo "Deploying with correct content-types..."
+      - echo "Deploying with force-replacement of metadata..."
       
-      # IMPORTANT: Deploy HTML files FIRST with correct content-type
-      - aws s3 cp index.html s3://csce412leenser.me/index.html --content-type "text/html"
+      # 1. Sync EVERYTHING first so files exist
+      - aws s3 sync . s3://csce412leenser.me/ --exclude ".git/*" --exclude "buildspec.yml"
       
-      # Then sync other files (excluding HTML to avoid overwriting)
-      - aws s3 sync . s3://csce412leenser.me/ --exclude "*.html" --exclude "buildspec.yml" --exclude ".git/*" --exclude ".gitignore" --exclude "README.md"
+      # 2. FORCE index.html to be text/html and REPLACE existing metadata
+      - aws s3 cp index.html s3://csce412leenser.me/index.html --content-type "text/html" --metadata-directive REPLACE
       
-      # Invalidate CloudFront cache
+      # 3. Invalidate CloudFront
       - aws cloudfront create-invalidation --distribution-id E13H7QB4MBMQ3A --paths "/*"
-      
-      - echo "Deployment completed successfully!"
 
-artifacts:
-  files:
-    - '**/*'
+# IMPORTANT: Remove the 'artifacts' section if you are using 'aws s3 sync' in the buildspec
+# If CodePipeline has a "Deploy" stage after this, it will overwrite your manual upload.
