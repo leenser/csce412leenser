@@ -3,33 +3,27 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18  # or whatever runtime you're using
-  
-  pre_build:
-    commands:
-      - echo Logging in to Amazon ECR...
-      # Add any pre-build commands here
+      nodejs: 18
   
   build:
     commands:
       - echo Build started on `date`
-      # Add your build commands here
-      - echo Build completed on `date`
+      # Your build commands here
   
   post_build:
     commands:
-      - echo Build completed on `date`
-      # Deploy with correct content-types
-      - echo "Deploying to S3 with correct content-types..."
+      - echo "Deploying with correct content-types..."
       
-      # First, sync all non-HTML files
-      - aws s3 sync . s3://csce412leenser.me/ --delete --exclude "*.html" --exclude "buildspec.yml" --exclude ".git/*"
+      # IMPORTANT: Deploy HTML files FIRST with correct content-type
+      - aws s3 cp index.html s3://csce412leenser.me/index.html --content-type "text/html"
       
-      # Then, sync HTML files with correct content-type
-      - aws s3 sync . s3://csce412leenser.me/ --exclude "*" --include "*.html" --content-type "text/html"
+      # Then sync other files (excluding HTML to avoid overwriting)
+      - aws s3 sync . s3://csce412leenser.me/ --exclude "*.html" --exclude "buildspec.yml" --exclude ".git/*" --exclude ".gitignore" --exclude "README.md"
       
       # Invalidate CloudFront cache
       - aws cloudfront create-invalidation --distribution-id E13H7QB4MBMQ3A --paths "/*"
+      
+      - echo "Deployment completed successfully!"
 
 artifacts:
   files:
