@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - aws s3 sync . s3://csce412leenser.me --exclude ".git/*"
+      - aws s3 cp s3://csce412leenser.me/index.html s3://csce412leenser.me/index.html \
+        --metadata-directive REPLACE \
+        --content-type text/html
