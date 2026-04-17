@@ -3,5 +3,8 @@ version: 0.2
 phases:
   build:
     commands:
-      - aws s3 sync . s3://csce412leenser.me --exclude ".git/*" --exclude "index.html"
-      - aws s3 cp index.html s3://csce412leenser.me/index.html --content-type text/html
+      # Sync everything first. Use --delete to remove old files if necessary.
+      - aws s3 sync . s3://csce412leenser.me --exclude ".git/*"
+      
+      # Explicitly overwrite the index.html metadata to ensure it's text/html
+      - aws s3 cp index.html s3://csce412leenser.me/index.html --content-type "text/html" --metadata-directive REPLACE
